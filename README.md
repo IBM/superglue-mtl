@@ -1,10 +1,9 @@
 # superglue-mtl
 
-This is a multi-task learning framework for [SuperGlue](https://super.gluebenchmark.com/) benchmark.  
-We mainly focus on designing multi-task training scheme and data augmentation techniques for  large pre-trained language models such as BERT, RoBERTa, XLNet. 
-Currently, most of the models are adapted from `[Pytorch-Transformers](https://github.com/huggingface/pytorch-transformers)` maintained by Hugging Face.
+This is a multi-task learning framework for [SuperGlue](https://super.gluebenchmark.com/) benchmark. We mainly focus on designing multi-task training scheme and data augmentation techniques for  large pre-trained language models such as BERT, RoBERTa, XLNet. 
+Currently, most of the models are adapted from [`Pytorch-Transformers`](https://github.com/huggingface/pytorch-transformers) maintained by Hugging Face.
 
-**This repository is under consturction**
+**This repository is under consturction.**
 
 ## Quick Start
 
@@ -13,6 +12,7 @@ First please make sure to install the necessary packages:
 ```shell
 pip install -r requirements.txt
 ```
+Install `Pytorch-Transformers`: https://github.com/huggingface/pytorch-transformers#installation
 
 Configure the environment variables to specify the data and experiment directories for checkpointing:
 
