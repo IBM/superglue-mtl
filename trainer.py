@@ -185,7 +185,7 @@ def _merge_data_from_all_tasks(processed_samples, batch_size=1):
         cur_task_num_samples = len(task_data)
         cur_task_num_batches = cur_task_num_samples // batch_size
         for ix in range(cur_task_num_batches):
-            cur_batch = task_data[ix: ix + batch_size]
+            cur_batch = task_data[ix * batch_size: (ix + 1) *batch_size]
             merged_dataset.append((task, cur_batch))
     return merged_dataset
 

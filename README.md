@@ -18,7 +18,7 @@ Configure the environment variables to specify the data and experiment directori
 
 ```shell
 export SG_DATA=./data/superglue/
-export EXP_DATA=./exp/
+export SG_MTL_EXP=./exp/
 ```
 
 Run demo training on a small set of toy examples:
