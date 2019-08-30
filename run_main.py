@@ -22,6 +22,12 @@ import trainer
 
 logger = logging.getLogger(__name__)
 
+ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig, RobertaConfig)), ())
+ALL_TASKS = ['BoolQ', 'BoolQNLI', 'RTE', 'CB', 'COPA']
+
+# `bert-span` is not to be confused with spanBERT.
+# `bert-span` is a modified BERT classifier where the classification layer is
+# added on top of one or more specified span(s), instead of the CLS token
 MODEL_CLASSES = {
     'bert': (BertConfig, BertForSequenceClassificationMultiTask, BertTokenizer),
     'roberta': (RobertaConfig, RobertaForSequenceClassificationMultiTask, RobertaTokenizer),
@@ -42,14 +48,14 @@ def _get_validated_args(input_args: Optional[List[str]] = None) -> argparse.Name
     parser = argparse.ArgumentParser()
 
     # These parameters are always required
-    parser.add_argument("--tasks", default="BoolQ,CB,RTE", type=str, required=False,
-                        help="Choose one or multiple tasks from `BoolQ`, `RTE`, `MNLI`, `COPA`")
-    parser.add_argument("--model_type", default="bert", type=str, required=False,
-                        help="Choose one from `bert`, `roberta`.")
-    parser.add_argument("--model_name", default="bert-base-uncased", type=str, required=False,
-                        help="pretrained model from: `bert-base-uncased`, "
-                             "`bert-large-uncased`, `bert-base-cased`, `bert-large-cased`, `roberta-base`,"
-                             "`roberta-large`, `roberta-large-mnli`.")
+    parser.add_argument("--tasks", default="BoolQ,CB,RTE", type=str, required=True,
+                       help="Choose one or multiple tasks from: " + ', '.join(ALL_TASKS))
+    parser.add_argument("--model_type", default="bert", type=str, required=True,
+                        choices=['bert', 'roberta', 'bert-span'],
+                        help="Choose one from `bert`, `roberta`, or `bert-span`.")
+    parser.add_argument("--model_name", default="bert-base-uncased", type=str, 
+                        required=True, choices=", ".join(ALL_MODELS),
+                        help="pretrained model from: " + ", ".join(ALL_MODELS))
     parser.add_argument("--output_dir", type=str, required=False,
                         help="The output directory where the model predictions and checkpoints will be written.")
 
@@ -67,11 +73,8 @@ def _get_validated_args(input_args: Optional[List[str]] = None) -> argparse.Name
 
     ## Other optional parameters
     parser.add_argument("--transfer_from", default=None, type=str,
-                        choices=[None, "squad1.0-base", "squad2.0-base", \
-                                "squad1.0-large", "squad2.0-large", \
-                                "squad2.0-large-wwm", "mnli-large", \
-                                "squad-nli"],
-                        help="On which task to do supervised pre-training of the BERT-base model.")
+                        choices=[None, "squad1-bert-large", "squad2-bert-large", "squad2-bert-large-wwm"],
+                        help="On which task to do supervised transfer learning from")
     parser.add_argument("--patience_for_task_dropping", default=10, type=int,
                         help="wait this many epochs to drop the task if no improvement is made on validation accuracy")
     parser.add_argument("--demo", action='store_true',
@@ -99,8 +102,6 @@ def _get_validated_args(input_args: Optional[List[str]] = None) -> argparse.Name
                         help="Epsilon for Adam optimizer.")
     parser.add_argument("--max_grad_norm", default=1.0, type=float,
                         help="Max gradient norm.")
-    parser.add_argument("--eval_epoch", default=2, type=int,
-                        help="Checkpoint to load for evaluation.")
     parser.add_argument("--num_train_epochs", default=20.0, type=float,
                         help="Total number of training epochs to perform.")
     parser.add_argument("--warmup_steps", default=0, type=int,
@@ -193,6 +194,20 @@ def load_or_create_model(args, config_class, model_class, label_count_info,
             iterations (batches)
     """
     model = _build_pretrained_model(args, config_class, model_class, label_count_info)
+   # for transfer learning setup, load pretrained weights in specified path
+    if args.transfer_from is not None:
+        transfer_path = data_utils.TRANSFER_PATH[args.transfer_from]
+        logger.info("Transfer from %s" % args.transfer_from)
+
+        transfer_model = torch.load(transfer_path)
+        if "model_state" in transfer_model:
+            transfer_model = transfer_model["model_state"]
+
+        # TODO: needs work to be able to determine whether only loading the 
+		# BertModel part (as opposed to load everything including the 
+		# classififer
+        model.load_state_dict(transfer_model) 
+
     model.to(device)
     no_decay = ['bias', 'LayerNorm.weight']
     optimizer_grouped_parameters = [

@@ -17,6 +17,13 @@ BERT_LARGE_SQUAD_1_PATH = "/u/avi/Projects/dccstor_avi5/nq/trained_squad_models/
 BERT_LARGE_SQUAD_2_PATH = "/u/avi/Projects/dccstor_avi5/nq/trained_squad_models/bert_large_sq2_mglass_pretrained.bin"
 BERT_LARGE_WWM_SQUAD_2_PATH = "/dccstor/panlin2/squad2/expts/Pan_squad2_whole_word_32bs/output/pytorch_model.bin"
 
+TRANSFER_PATH = {
+    "squad1-bert-large" : BERT_LARGE_SQUAD_1_PATH,
+    "squad2-bert-large" : BERT_LARGE_SQUAD_2_PATH,
+    "squad2-bert-large-wwm" : BERT_LARGE_WWM_SQUAD_2_PATH,
+    "squad2nli-roberta-large" : ROBERTA_LARGE_SQUAD_NLI_PATH,
+}
+
 
 class InputExample(object):
     """Base class for a single input example, this will be inherited for specific tasks."""
@@ -362,8 +369,11 @@ class SuperGlueDataset(Dataset):
             self.all_span_1_text = [f.span_1_text for f in features]
             self.all_span_2_mask = torch.tensor([f.span_2_mask for f in features], dtype=torch.long)
             self.all_span_2_text = [f.span_2_text for f in features]
-
-        if task_loader.task_name == "COPA":
+       
+        # if label is unavailable
+        if features[0].label_id is None:
+            self.all_label_ids = torch.tensor([0 for _ in features], dtype=torch.long)
+        elif task_loader.task_name == "COPA":
             self.all_label_ids = torch.tensor([f.label_id for f in features],
                                      dtype=torch.float)
         else:

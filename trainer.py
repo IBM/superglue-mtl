@@ -88,8 +88,10 @@ def _run_task_prediction(processed_task_samples, model, args, task_id, device, n
                 preds = probs > 0.5
             else:
                 preds = np.argmax(logits, axis=1).tolist()
+            
+            if label_ids is not None:
+                label_ids = label_ids.tolist()
 
-            label_ids = label_ids.tolist()
             probs = probs.tolist()
 
             val_loss.append(cur_loss.item())

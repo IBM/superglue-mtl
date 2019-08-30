@@ -5,6 +5,11 @@ Currently, most of the models are adapted from [`Pytorch-Transformers`](https://
 
 **This repository is under consturction.**
 
+## Todo
+
+1. inference time task selection (according to the task_id, only load specified classifier head instead of all)
+1. output superglue submissible format
+
 ## Quick Start
 
 First please make sure to install the necessary packages:
